@@ -4,8 +4,9 @@ local lfs = require 'lfs'
 local M = {
 	n_classes = 0,
 	in_dir = 'image_samples',
+	in_test_dir = 'image_samples',
 	out_dir = 'training_images',
-	test_dir = 'test_images',
+	out_test_dir = 'test_images',
 	reshape_size = 60
 }
 
@@ -129,23 +130,22 @@ local function do_blurs(image, filename, out_path)
 end
 
 function M.clean_dirs()
-	os.execute('rm -rf '..M.test_dir)
-	os.execute('mkdir '..M.test_dir)
+	os.execute('rm -rf '..M.out_test_dir)
+	os.execute('mkdir '..M.out_test_dir)
 	os.execute('rm -rf '..M.out_dir)
 	os.execute('mkdir '..M.out_dir)
 end
 
 function M.split_samples()
-	local path = 'samples'
-	for dir in lfs.dir(path) do
-		if dir ~= '.' and dir ~= '..' and dir ~= '.DS_Store' then
-			os.execute('mkdir -p test/'..dir)
-			for file in lfs.dir(path..'/'..dir) do
+	for dir in lfs.dir(M.out_dir) do
+		if dir ~= '.' and dir ~= '..' and dir ~= '.DS_Store' then -- TODO first char
+			os.execute('mkdir -p '..M.out_test_dir..'/'..dir)
+			for file in lfs.dir(M.out_dir..'/'..dir) do
 				if file ~= '.' and file ~= '..' and file ~= '.DS_Store' then
 					local find = string.find(file,'_')
 					local r = math.random(10)
 					if r < 3 and find and find > 0 then
-						os.execute('mv '..path..'/'..dir..'/'..file..' test/'..dir..'/'..file)
+						os.execute('mv '..M.out_dir..'/'..dir..'/'..file..' '..M.out_test_dir..'/'..dir..'/'..file)
 					end
 				end
 			end
@@ -206,7 +206,7 @@ local function noise_images(out_path, images)
 	return noised_images
 end
 
-function M.run()
+function M.run_all()
 	local images = {}
 	M.clean_dirs()
 	M.n_classes = 0
@@ -225,10 +225,10 @@ function M.run()
 			merge_images(images,scale_images(out_path, images))
 			merge_images(images,noise_images(out_path, images))
 			merge_images(images,blur_images(out_path, images))
-
+			print("Done processing this class")
 		end
 	end
-	--M.split_samples()
+	M.split_samples()
 	return images
 end
 
