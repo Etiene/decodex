@@ -1,5 +1,6 @@
 local Image = require 'image'
 local lfs = require 'lfs'
+local image_utils = dofile('utils/image.lua')
 
 local M = {
 	n_classes = 0,
@@ -7,7 +8,7 @@ local M = {
 	in_test_dir = 'image_samples',
 	out_dir = 'training_images',
 	out_test_dir = 'test_images',
-	reshape_size = 60
+	reshape_size = 60,
 }
 
 torch.setdefaulttensortype('torch.FloatTensor')
@@ -31,26 +32,6 @@ local function new_image_settings(current_x, current_y)
 	return bigger_side, padding[1], padding[2]
 end
 
-local function image_fill_color(image, color)
-	image[1]:fill(color.r)
-	image[2]:fill(color.g)
-	image[3]:fill(color.b)
-end
-
-local function paste_image(base_img, overlay_img, x, y, size)
-	x = x or 0
-	y = y or 0
-	local size = size or overlay_img:size()
-
-	for i=1,3 do
-		for j=1,size[2] do
-			for k=1, size[3] do
-				base_img[i][j+x][k+y] = overlay_img[i][j][k]
-			end
-		end
-	end
-end
-
 function M.reshape_square(image)
 	local size = image:size()
 	if size[2] == size[3] then return image end
@@ -59,8 +40,8 @@ function M.reshape_square(image)
   local bigger_side, padding_x, paddding_y = new_image_settings(size[2], size[3])
 
 	local new_img = torch.Tensor(3, bigger_side, bigger_side)
-	image_fill_color(new_img, first_pixel_rgb)
-	paste_image(new_img, image, padding_x, paddding_y, size)
+	image_utils.fill_color(new_img, first_pixel_rgb)
+	image_utils.overlay_image(new_img, image, padding_x, paddding_y, size)
 
 	return new_img
 end
@@ -96,23 +77,17 @@ local function do_rotations(image, filename, out_path)
 	return rotated_images
 end
 
-local function add_noise(new_image, base_image, noise)
-	for i = 1,3 do
-		new_image[i] = base_image[i] + noise
-	end
-end
-
 local function do_noises(image, filename, out_path)
 	local images = {}
 	local img = image:clone()
 	local size = image:size()
 	local noises = {
-		torch.randn(size[2], size[3])/2,
-		torch.randn(size[2], size[3])/7,
+		torch.randn(size[2], size[3])/10,
+		torch.randn(size[2], size[3])/8,
 		torch.randn(size[2], size[3])/5
 	}
 	for i, noise in ipairs(noises) do
-		add_noise(img, image, noise)
+		image_utils.add_noise(img, noise)
 		save_image(images, img, out_path, filename..'_noi_'..i)
 	end
 	return images
@@ -121,10 +96,8 @@ end
 local function do_blurs(image, filename, out_path)
 	local images = {}
 	for i = 1, 3 do
-		local gau = Image.gaussian(i)
-		local img = Image.convolve(image, gau, 'valid')
-		local img2 = Image.toDisplayTensor{input = img, saturate = true}
-		save_image(images, img2, out_path, filename..'_blu_'..i)
+		local img = image_utils.blur(image, i)
+		save_image(images, img, out_path, filename..'_blu_'..i)
 	end
 	return images
 end
@@ -137,6 +110,7 @@ function M.clean_dirs()
 end
 
 function M.split_samples()
+	print "Splitting training and test sets..."
 	for dir in lfs.dir(M.out_dir) do
 		if dir ~= '.' and dir ~= '..' and dir ~= '.DS_Store' then -- TODO first char
 			os.execute('mkdir -p '..M.out_test_dir..'/'..dir)
