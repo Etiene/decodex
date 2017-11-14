@@ -24,7 +24,7 @@ After some investigations I decided to break this project down into a set of dif
 Although this looks like a natural order to proceed with this project, we can also represent this
 list in a Directed Acyclic Graph (DAG).
 
-<image>
+<image> TODO make the graph
 1--3--4
 2--|
 
@@ -35,7 +35,7 @@ I decided the best place for me to start was step 2.
 # Machine Learning Learning
 
 
-<xkcd picture>
+<TODO add xkcd picture>
 
 Alright, so what does it mean, to have an ML model that is able to correctly classify single character?
 And how did I come to the conclusion that this was what I needed? To be frank, I wasn't sure. But I was prepared
@@ -43,14 +43,15 @@ to research more on the subject and amend my proposal if necessary be.
 
 This step, itself, can be represented in its own DAG.
 
-<image>                 - decide approach related to my problem
+<image> TODO make the graph for the info below
+                        - decide approach related to my problem
 <Study machine learning - Pick a tool and install it-  implement approach following tool's docs, tutorials and examples
                         - Prepare a dataset with samples of characters>
 
 ## Study machine learning
 I started an online course, twice, did not finish. Read buzz blog posts coming on hackernews now and then. Started following what was going on with open-source projects in this area within the community I was closer with, which is Lua (this is when I discovered Torch, a scientific computing framework I'll get into more details later on). Started talking about ML with friends and even with strangers when drunk in pubs! Finally I came across this material which was great for me: https://medium.com/@ageitgey/machine-learning-is-fun-80ea3ec3c471
 
-Machine Learning is a field closely tied to Statistics and Artificial Intelligence. Many learning problems are formulated as minimization of some loss function on a training set of examples
+Machine Learning is a field closely tied to Statistics and Artificial Intelligence.
 
 
 https://pt.wikipedia.org/wiki/Codex_Seraphinianus

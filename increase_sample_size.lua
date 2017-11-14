@@ -8,7 +8,7 @@ local M = {
 	in_test_dir = 'image_samples',
 	out_dir = 'training_images',
 	out_test_dir = 'test_images',
-	reshape_size = 60,
+	scaling_size = 60,
 }
 
 torch.setdefaulttensortype('torch.FloatTensor')
@@ -16,7 +16,7 @@ torch.setdefaulttensortype('torch.FloatTensor')
 local function load_images(dir)
 	local images = {}
 	for file in lfs.dir(dir) do
-		if file ~= '.' and file ~= '..' then
+		if file:sub(1,1) ~= '.'  then
 			local image = Image.load(dir..'/'..file, 3)
 			local _, _, filename = string.find(file,'([^.]*).png')
 			images[filename] = image
@@ -112,13 +112,11 @@ end
 function M.split_samples()
 	print "Splitting training and test sets..."
 	for dir in lfs.dir(M.out_dir) do
-		if dir ~= '.' and dir ~= '..' and dir ~= '.DS_Store' then -- TODO first char
+		if dir:sub(1,1) ~= '.' then
 			os.execute('mkdir -p '..M.out_test_dir..'/'..dir)
 			for file in lfs.dir(M.out_dir..'/'..dir) do
-				if file ~= '.' and file ~= '..' and file ~= '.DS_Store' then
-					local find = string.find(file,'_')
-					local r = math.random(10)
-					if r < 3 and find and find > 0 then
+				if file:sub(1,1) ~= '.' then
+					if math.random(10) < 3 then
 						os.execute('mv '..M.out_dir..'/'..dir..'/'..file..' '..M.out_test_dir..'/'..dir..'/'..file)
 					end
 				end
@@ -141,7 +139,7 @@ local function scale_images(out_path, images)
 	print "Scaling images..."
 	local scaled_images = {}
 	for filename, image in pairs(images) do
-		image = Image.scale(image, M.reshape_size, M.reshape_size)
+		image = Image.scale(image, M.scaling_size, M.scaling_size)
 		save_image(scaled_images, image, out_path, filename)
 	end
 	return scaled_images
@@ -181,29 +179,29 @@ local function noise_images(out_path, images)
 end
 
 function M.run_all()
-	local images = {}
 	M.clean_dirs()
 	M.n_classes = 0
 	for dir in lfs.dir(M.in_dir) do
-		if dir ~= '.' and dir ~= '..' and dir ~= '.DS_Store' then -- TODO CHANGE TO GET FIRST CHAR
-			print("Processing image class "..M.n_classes)
+		if dir:sub(1,1) ~= '.' then
 			M.n_classes = M.n_classes + 1
-			local size
+			print("Processing image class "..M.n_classes)
+
 			local out_path = M.out_dir..'/'..dir
 			os.execute('mkdir '..out_path)
 
-			images = load_images(M.in_dir..'/'..dir)
-
+			local images = load_images(M.in_dir..'/'..dir)
 			images = reshape_images(out_path, images)
 			merge_images(images,rotate_images(out_path, images))
-			merge_images(images,scale_images(out_path, images))
 			merge_images(images,noise_images(out_path, images))
 			merge_images(images,blur_images(out_path, images))
+			scale_images(out_path, images)
+
 			print("Done processing this class")
 		end
 	end
 	M.split_samples()
-	return images
+	print("Done!")
+	return M.n_classes
 end
 
 return M
