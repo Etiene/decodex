@@ -1,3 +1,5 @@
+https://medium.com/@ageitgey/machine-learning-is-fun-80ea3ec3c471
+
 https://github.com/torch/torch7
 
 https://github.com/soumith/cvpr2015/blob/master/Deep%20Learning%20with%20Torch.ipynb
