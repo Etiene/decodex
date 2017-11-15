@@ -1,5 +1,7 @@
 # Decodex Machine Learning  - Part I
 
+WIP WIP WIP
+
 ## Project based learning: The Decodex Project
 
 I decided I wanted to learn Machine Learning (ML) some time ago. And my way of learning things is making projects with the things I'm trying to learn. I also happen to have an obsession with the book Codex Seraphinianus.
