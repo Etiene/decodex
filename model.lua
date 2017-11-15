@@ -1,6 +1,7 @@
 local lfs = require 'lfs'
 local image = require 'image'
 local nn = require 'nn'
+local image_util = require 'utils.image'
 
 local M = {
 	training_dir = 'training_images',
@@ -98,21 +99,6 @@ function M.normalize_sets(training_set, test_set)
 	return training_set, test_set
 end
 
-function M.verify_outisde_image(path)
-	local samples = require 'increase_samples'
-	local img = image.load(path,3)
-	img = samples.reshape_square(img)
-	img = image.scale(img,60,60)
-
-	for i=1,3 do -- over each image channel
-    img[i]:add(-M.mean[i]) -- mean subtraction
-    img[i]:div(M.stdv[i]) -- std scaling
-	end
-
-	return M.net:forward(img)
-end
-
-
 function M.train(set, n_classes)
 	print("Training model...")
 	local criterion = nn.ClassNLLCriterion()
@@ -133,12 +119,33 @@ function M.train(set, n_classes)
 
 	local trainer = nn.StochasticGradient(net, criterion)
 	trainer.learningRate = 0.001
-	trainer.maxIteration = 5 -- just do 5 epochs of training.
+	trainer.maxIteration = 20 -- epochs of training.
 	trainer:train(set)
 	M.net = net
 	return net
 end
 
+local function load_and_prepare_image(path)
+	local img = image.load(path,3)
+	img = image_util.reshape_square(img)
+	img = image.scale(img, M.image_size, M.image_size)
+
+	for i=1,3 do -- normalize
+		img[i]:add(-M.mean[i])
+		img[i]:div(M.stdv[i])
+	end
+
+	return img
+end
+
+function M.classify_image(path)
+	local img = load_and_prepare_image(path)
+
+	local predictions = M.net:forward(img)
+	local confidences, indices = torch.sort(predictions, true)
+	confidences = confidences:exp()
+	return indices[1]..': '..confidences[1], confidences, indices
+end
 
 function M.verify()
 	local correct = 0
@@ -162,7 +169,22 @@ function M.run(n_classes)
 	local net = M.train(training_set,n_classes)
 
 	M.testing_set = testing_set
+	M.training_set = training_set
 	return net
+end
+
+function M.dump_sets()
+	torch.save('testing_set.t7', M.testing_set)
+	torch.save('training_set.t7', {M.training_set,M.mean,M.stdv})
+	torch.save('model.t7', M.net)
+end
+
+function M.load_sets()
+	M.testing_set = torch.load('testing_set.t7')
+	M.training_set,M.mean,M.stdv = table.unpack(torch.load('training_set.t7'))
+	M.add_meta_ops(M.training_set)
+	M.add_meta_ops(M.testing_set)
+	M.net = torch.load('model.t7')
 end
 
 return M

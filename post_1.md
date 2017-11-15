@@ -44,14 +44,17 @@ to research more on the subject and amend my proposal if necessary be.
 This step, itself, can be represented in its own DAG.
 
 <image> TODO make the graph for the info below
-                        - decide approach related to my problem
+
 <Study machine learning - Pick a tool and install it-  implement approach following tool's docs, tutorials and examples
                         - Prepare a dataset with samples of characters>
+
+
 
 ## Study machine learning
 I started an online course, twice, did not finish. Read buzz blog posts coming on hackernews now and then. Started following what was going on with open-source projects in this area within the community I was closer with, which is Lua (this is when I discovered Torch, a scientific computing framework I'll get into more details later on). Started talking about ML with friends and even with strangers when drunk in pubs! Finally I came across this material which was great for me: https://medium.com/@ageitgey/machine-learning-is-fun-80ea3ec3c471
 
-Machine Learning is a field closely tied to Statistics and Artificial Intelligence.
+Machine Learning is a field closely tied to Statistics and Artificial Intelligence. The main goal of it is to have
+algorithms capable of inferring information
 
 
 https://pt.wikipedia.org/wiki/Codex_Seraphinianus

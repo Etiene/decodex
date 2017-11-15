@@ -25,27 +25,6 @@ local function load_images(dir)
 	return images
 end
 
-local function new_image_settings(current_x, current_y)
-	local bigger_side = current_x > current_y and current_x or current_y
-	local padding = math.abs(current_x - current_y)/2
-	padding = current_x > current_y and {0,padding} or {padding,0}
-	return bigger_side, padding[1], padding[2]
-end
-
-function M.reshape_square(image)
-	local size = image:size()
-	if size[2] == size[3] then return image end
-
-	local first_pixel_rgb = {r = image[1][1][1], g = image[2][1][1], b = image[3][1][1]}
-  local bigger_side, padding_x, paddding_y = new_image_settings(size[2], size[3])
-
-	local new_img = torch.Tensor(3, bigger_side, bigger_side)
-	image_utils.fill_color(new_img, first_pixel_rgb)
-	image_utils.overlay_image(new_img, image, padding_x, paddding_y, size)
-
-	return new_img
-end
-
 local function save_image(images, image, out_path, filename)
 	images[filename] = image
 	Image.save(out_path..'/'..filename..'.png', image)
@@ -129,7 +108,7 @@ local function reshape_images(out_path, images)
 	print "Reshaping images..."
 	local reshaped_images = {}
 	for filename, image in pairs(images) do
-		image = M.reshape_square(image)
+		image = image_utils.reshape_square(image)
 		save_image(reshaped_images, image, out_path, filename)
 	end
 	return reshaped_images

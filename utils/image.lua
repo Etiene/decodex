@@ -49,4 +49,25 @@ function M.blur(img, gaussian_level)
   return image.toDisplayTensor{input = img, saturate = true}
 end
 
+local function new_image_settings(current_x, current_y)
+	local bigger_side = current_x > current_y and current_x or current_y
+	local padding = math.abs(current_x - current_y)/2
+	padding = current_x > current_y and {0,padding} or {padding,0}
+	return bigger_side, padding[1], padding[2]
+end
+
+function M.reshape_square(image)
+	local size = image:size()
+	if size[2] == size[3] then return image end
+
+	local first_pixel_rgb = {r = image[1][1][1], g = image[2][1][1], b = image[3][1][1]}
+  local bigger_side, padding_x, paddding_y = new_image_settings(size[2], size[3])
+
+	local new_img = torch.Tensor(3, bigger_side, bigger_side)
+	M.fill_color(new_img, first_pixel_rgb)
+	M.overlay_image(new_img, image, padding_x, paddding_y, size)
+
+	return new_img
+end
+
 return M
