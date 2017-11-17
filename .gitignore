@@ -1,3 +1,5 @@
 training_images/*
 test_images/*
 *.t7
+samples_test2/*
+samples_training2/*

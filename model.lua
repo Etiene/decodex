@@ -4,9 +4,14 @@ local nn = require 'nn'
 local image_util = require 'utils.image'
 
 local M = {
-	training_dir = 'training_images',
-	test_dir = 'test_images',
-	image_size = 60
+	training_dir = 'samples_training2',
+	test_dir = 'samples_test2',
+	image_size = 60,
+	dumps = {
+		training_set = "training2_set.t7",
+		testing_set = "testing2_set.t7",
+		model = "model2.t7"
+	}
 }
 
 local function load_images(path)
@@ -37,15 +42,27 @@ local function table_to_tensor(data)
 	return data
 end
 
+local function compute_sets()
+	print("Loading sets from images...")
+	local training_set = load_images(M.training_dir)
+	local testing_set = load_images(M.test_dir)
+
+	training_set = table_to_tensor(training_set)
+	testing_set = table_to_tensor(testing_set)
+
+	M.add_meta_ops(training_set)
+	M.add_meta_ops(testing_set)
+	M.normalize_sets(training_set, testing_set)
+
+	return training_set, testing_set
+end
+
 function M.load()
-	local training_data = load_images(M.training_dir)
-	local test_data = load_images(M.test_dir)
-
-	print("Loading images...")
-	training_data = table_to_tensor(training_data)
-	test_data = table_to_tensor(test_data)
-
-	return training_data, test_data
+	if not M.training_set or not M.testing_set then
+		if not M.load_sets() then
+			M.training_set, M.testing_set = compute_sets()
+		end
+	end
 end
 
 function M.add_meta_ops(dataset)
@@ -99,7 +116,8 @@ function M.normalize_sets(training_set, test_set)
 	return training_set, test_set
 end
 
-function M.train(set, n_classes)
+function M.train(set, n_classes, epochs)
+	epochs = epochs or 20
 	print("Training model...")
 	local criterion = nn.ClassNLLCriterion()
 	local net = nn.Sequential()
@@ -119,10 +137,21 @@ function M.train(set, n_classes)
 
 	local trainer = nn.StochasticGradient(net, criterion)
 	trainer.learningRate = 0.001
-	trainer.maxIteration = 20 -- epochs of training.
+	trainer.maxIteration = epochs -- epochs of training.
 	trainer:train(set)
 	M.net = net
 	return net
+end
+
+function M.load_and_normalise(path)
+	local img = image.load(path,3)
+
+	for i=1,3 do -- normalize
+		img[i]:add(-M.mean[i])
+		img[i]:div(M.stdv[i])
+	end
+
+	return img
 end
 
 local function load_and_prepare_image(path)
@@ -138,12 +167,17 @@ local function load_and_prepare_image(path)
 	return img
 end
 
-function M.classify_image(path)
-	local img = load_and_prepare_image(path)
-
-	local predictions = M.net:forward(img)
+function M.predict(tensor)
+	local predictions = M.net:forward(tensor)
 	local confidences, indices = torch.sort(predictions, true)
 	confidences = confidences:exp()
+	return {confidences, indices}
+end
+
+function M.classify_image(path)
+	local img = load_and_prepare_image(path)
+	local confidences, indices = table.unpack(M.predict(img))
+
 	return indices[1]..': '..confidences[1], confidences, indices
 end
 
@@ -160,31 +194,29 @@ function M.verify()
 	print(correct, 'correct classifications out of ', M.testing_set:size(), 'samples')
 end
 
-function M.run(n_classes)
+function M.run(n_classes, epochs)
 	n_classes = n_classes or 2
-	local training_set, testing_set = M.load()
-	M.add_meta_ops(training_set)
-	M.add_meta_ops(testing_set)
-	M.normalize_sets(training_set, testing_set)
-	local net = M.train(training_set,n_classes)
-
-	M.testing_set = testing_set
-	M.training_set = training_set
+	M.load()
+	local net = M.train(M.training_set, n_classes, epochs)
 	return net
 end
 
 function M.dump_sets()
-	torch.save('testing_set.t7', M.testing_set)
-	torch.save('training_set.t7', {M.training_set,M.mean,M.stdv})
-	torch.save('model.t7', M.net)
+	torch.save(M.dumps.testing_set, M.testing_set)
+	torch.save(M.dumps.training_set, {M.training_set,M.mean,M.stdv})
+	torch.save(M.dumps.model, M.net)
 end
 
-function M.load_sets()
-	M.testing_set = torch.load('testing_set.t7')
-	M.training_set,M.mean,M.stdv = table.unpack(torch.load('training_set.t7'))
+function M.load_sets() -- the sets are stored already normalised, but they loose meta info
+	for _,v in pairs(M.dumps) do
+		if not path.exists(v) then return false end
+	end
+	M.testing_set = torch.load(M.dumps.testing_set)
+	M.training_set,M.mean,M.stdv = table.unpack(torch.load(M.dumps.training_set))
 	M.add_meta_ops(M.training_set)
 	M.add_meta_ops(M.testing_set)
-	M.net = torch.load('model.t7')
+	M.net = torch.load(M.dumps.model)
+	return true
 end
 
 return M
