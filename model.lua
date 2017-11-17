@@ -143,8 +143,16 @@ function M.train(set, n_classes, epochs)
 	return net
 end
 
+function M.normalize(img)
+	for i=1,3 do -- normalize
+		img[i]:add(-M.mean[i])
+		img[i]:div(M.stdv[i])
+	end
+	return img
+end
+
 function M.load_and_normalise(path)
-	local img = image.load(path,3)
+	local img = image.load(path,3,'float')
 
 	for i=1,3 do -- normalize
 		img[i]:add(-M.mean[i])
@@ -155,7 +163,7 @@ function M.load_and_normalise(path)
 end
 
 local function load_and_prepare_image(path)
-	local img = image.load(path,3)
+	local img = image.load(path,3,'float')
 	img = image_util.reshape_square(img)
 	img = image.scale(img, M.image_size, M.image_size)
 

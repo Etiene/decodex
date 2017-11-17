@@ -4,10 +4,10 @@ local image_utils = dofile('utils/image.lua')
 
 local M = {
 	n_classes = 0,
-	in_dir = 'image_samples',
+	in_dir = 'samples_2',
 	in_test_dir = 'image_samples',
-	out_dir = 'training_images',
-	out_test_dir = 'test_images',
+	out_dir = 'samples_training2',
+	out_test_dir = 'samples_test2',
 	scaling_size = 60,
 }
 
@@ -62,7 +62,7 @@ local function do_noises(image, filename, out_path)
 	local size = image:size()
 	local noises = {
 		torch.randn(size[2], size[3])/10,
-		torch.randn(size[2], size[3])/8,
+		--torch.randn(size[2], size[3])/8,
 		torch.randn(size[2], size[3])/5
 	}
 	for i, noise in ipairs(noises) do
@@ -74,7 +74,7 @@ end
 
 local function do_blurs(image, filename, out_path)
 	local images = {}
-	for i = 1, 3 do
+	for i = 2, 3 do
 		local img = image_utils.blur(image, i)
 		save_image(images, img, out_path, filename..'_blu_'..i)
 	end
