@@ -4,11 +4,11 @@ local image_utils = dofile('utils/image.lua')
 
 local M = {
 	n_classes = 0,
-	in_dir = 'samples_2',
-	in_test_dir = 'image_samples',
-	out_dir = 'samples_training2',
-	out_test_dir = 'samples_test2',
-	scaling_size = 60,
+	in_dir = 'samples_total',
+	in_test_dir = '',
+	out_dir = 'samples_training_total',
+	out_test_dir = 'samples_test_total',
+	scaling_size = 32,
 }
 
 torch.setdefaulttensortype('torch.FloatTensor')
@@ -47,8 +47,8 @@ end
 
 local function do_rotations(image, filename, out_path)
 	local rotated_images = {}
-	local clockwise_rotate = {0.02, 0.10, 0.02}
-	local anticlock_rotate = {-0.10, -0.02, 0.02}
+	local clockwise_rotate = {0.09, 0.10, 0.05}
+	local anticlock_rotate = {-0.10, -0.09, 0.05}
 
 	rotate_distort_and_crop(rotated_images, image, filename, '_cwr_', clockwise_rotate, out_path)
 	rotate_distort_and_crop(rotated_images, image, filename, '_acwr_', anticlock_rotate, out_path)
@@ -61,7 +61,7 @@ local function do_noises(image, filename, out_path)
 	local img = image:clone()
 	local size = image:size()
 	local noises = {
-		torch.randn(size[2], size[3])/10,
+		--torch.randn(size[2], size[3])/10,
 		--torch.randn(size[2], size[3])/8,
 		torch.randn(size[2], size[3])/5
 	}
@@ -74,10 +74,10 @@ end
 
 local function do_blurs(image, filename, out_path)
 	local images = {}
-	for i = 2, 3 do
-		local img = image_utils.blur(image, i)
-		save_image(images, img, out_path, filename..'_blu_'..i)
-	end
+	--for i = 2, 3 do
+		local img = image_utils.blur(image, 3)
+		save_image(images, img, out_path, filename..'_blu_'..3)
+	--end
 	return images
 end
 

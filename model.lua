@@ -4,13 +4,13 @@ local nn = require 'nn'
 local image_util = require 'utils.image'
 
 local M = {
-	training_dir = 'samples_training2',
-	test_dir = 'samples_test2',
-	image_size = 60,
+	training_dir = 'samples_training_total',
+	test_dir = 'samples_test_total',
+	image_size = 32,
 	dumps = {
-		training_set = "training2_set.t7",
-		testing_set = "testing2_set.t7",
-		model = "model2.t7"
+		training_set = "training_total.t7",
+		testing_set = "testing_total.t7",
+		model = "modeltotal.t7"
 	}
 }
 
@@ -59,9 +59,9 @@ end
 
 function M.load()
 	if not M.training_set or not M.testing_set then
-		if not M.load_sets() then
+		--if not M.load_sets() then
 			M.training_set, M.testing_set = compute_sets()
-		end
+		--end
 	end
 end
 
@@ -116,6 +116,8 @@ function M.normalize_sets(training_set, test_set)
 	return training_set, test_set
 end
 
+-- dense layer
+
 function M.train(set, n_classes, epochs)
 	epochs = epochs or 20
 	print("Training model...")
@@ -124,15 +126,15 @@ function M.train(set, n_classes, epochs)
 	net:add(nn.SpatialConvolution(3, 6, 5, 5)) -- 3 input image channels, 6 output channels, 5x5 convolution kernel
 	net:add(nn.ReLU())                       -- non-linearity
 	net:add(nn.SpatialMaxPooling(2,2,2,2))     -- A max-pooling operation that looks at 2x2 windows and finds the max.
-	net:add(nn.SpatialConvolution(6, 60, 5, 5))
+	net:add(nn.SpatialConvolution(6, 32, 5, 5))
 	net:add(nn.ReLU())                       -- non-linearity
 	net:add(nn.SpatialMaxPooling(2,2,2,2))
-	net:add(nn.View(60*12*12))                    -- reshapes from a 3D tensor of 16x5x5 into 1D tensor of 16*5*5
-	net:add(nn.Linear(60*12*12, 120))             -- fully connected layer (matrix multiplication between input and weights)
+	net:add(nn.View(32*5*5))                    -- reshapes from a 3D tensor into 1D tensor
+	net:add(nn.Linear(32*5*5, 120))             -- fully connected layer (matrix multiplication between input and weights)
 	net:add(nn.ReLU())                       -- non-linearity
 	net:add(nn.Linear(120, 84))
 	net:add(nn.ReLU())                       -- non-linearity
-	net:add(nn.Linear(84, n_classes))                   -- 10 is the number of outputs of the network (in this case, 10 digits)
+	net:add(nn.Linear(84, n_classes))                   -- n the number of outputs of the network (in this case)
 	net:add(nn.LogSoftMax())                     -- converts the output to a log-probability. Useful for classification problems
 
 	local trainer = nn.StochasticGradient(net, criterion)
@@ -205,6 +207,7 @@ end
 function M.run(n_classes, epochs)
 	n_classes = n_classes or 2
 	M.load()
+	collectgarbage()
 	local net = M.train(M.training_set, n_classes, epochs)
 	return net
 end

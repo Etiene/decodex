@@ -14,14 +14,11 @@ M.colors = {
 
 M.detected = {}
 
-local scales = { 
-	1.8, 
-	1.5, 
-	1.2, 
-	--1,
-	0.8, 
-	0.5, 
---	0.3 
+local scales = {
+	1,
+	0.7,
+	0.4, 
+--	0.3
 }
 
 local function compare(a,b)
@@ -29,13 +26,13 @@ local function compare(a,b)
 end
 
 local function is_overlapping(a,b)
-	return  (b.x1 > a.x1 and b.x1 < a.x2) or 
+	return  (b.x1 > a.x1 and b.x1 < a.x2) or
 					(a.x1 > b.x1 and a.x1 < b.x2) or
-					(b.y1 > a.y1 and b.y1 < a.y2) or 
-					(a.y1 > b.y1 and a.y1 < b.y2) 
+					(b.y1 > a.y1 and b.y1 < a.y2) or
+					(a.y1 > b.y1 and a.y1 < b.y2)
 end
 
-local function overlapping_area(a,b) 
+local function overlapping_area(a,b)
 	local bigger_x1 = a.x1 > b.x1 and a.x1 or b.x1
 	local smaller_x2 = a.x2 < b.x2 and a.x2 or b.x2
 
@@ -63,10 +60,10 @@ function M.compress()
 				local j_area = (M.detected[j].x2 - M.detected[j].x1) * (M.detected[j].y2 - M.detected[j].y1)
 				if  not M.detected[j].weak and
 						--M.detected[i].class ~= M.detected[j].class and
-						is_overlapping(M.detected[i],M.detected[j]) and 
+						is_overlapping(M.detected[i],M.detected[j]) and
 					  (
-					  	overlapping_area(M.detected[i],M.detected[j])  >= j_area/2 
-					   or overlapping_area(M.detected[i],M.detected[j])  >= i_area*1/4 ) 
+					  	overlapping_area(M.detected[i],M.detected[j])  >= j_area/2
+					   or overlapping_area(M.detected[i],M.detected[j])  >= i_area*1/4 )
 						then
 					  print('Overlapped')
 					  M.detected[j].weak = true
@@ -81,9 +78,9 @@ function M.compress()
 end
 
 local function slide_and_detect(network, img, scale, mean, stdv, step)
-	
+
 	for i=1,3 do -- over each image channel
-    img[i]:add(-mean[i]) -- mean subtraction    
+    img[i]:add(-mean[i]) -- mean subtraction
     img[i]:div(stdv[i]) -- std scaling
 	end
 	local size = img:size()
@@ -104,12 +101,12 @@ local function slide_and_detect(network, img, scale, mean, stdv, step)
 		end
 	end
 
-end	
+end
 
 function M.run(network,image_path,mean,stdv,step)
 	step = step or 10
 	local img = image.load(image_path, 3)
-	local img2 = image.toDisplayTensor({input = img, saturate = false, }) 
+	local img2 = image.toDisplayTensor({input = img, saturate = false, })
 
 	local pyramid = image.gaussianpyramid(img, scales)
 
@@ -126,7 +123,7 @@ function M.run(network,image_path,mean,stdv,step)
 			img2 = image.drawRect(img2, M.detected[i].x1, M.detected[i].y1, M.detected[i].x2, M.detected[i].y2, {lineWidth = 2, color = M.colors[M.detected[i].class]})
 		end
 	end
-						
+
 
 	image.display(img2)
 end
